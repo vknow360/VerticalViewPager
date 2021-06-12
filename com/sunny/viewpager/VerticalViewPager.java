@@ -3,15 +3,21 @@ import android.content.Context;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import com.google.appinventor.components.annotations.*;
 import com.google.appinventor.components.common.ComponentCategory;
 import com.google.appinventor.components.runtime.*;
+import com.google.appinventor.components.runtime.errors.YailRuntimeError;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @DesignerComponent(version = 1,
+		versionName = "1.2",
         description = "Extension to create Vertical View Pager<br>Developed By Sunny Gupta",
         nonVisible = true,
         iconName = "https://res.cloudinary.com/andromedaviewflyvipul/image/upload/c_scale,h_20,w_20/v1571472765/ktvu4bapylsvnykoyhdm.png",
@@ -20,74 +26,122 @@ import java.util.ArrayList;
 public class VerticalViewPager extends AndroidNonvisibleComponent{
     public Context context;
     public ViewGroup viewGroup;
-    public VerticalVPager vPager;
-    public CustomPagerAdapter pagerAdapter;
+    public HashMap<String, VerticalVPager> pagerMap = new HashMap<>();
     public VerticalViewPager(ComponentContainer container){
         super(container.$form());
         context = container.$context();
-        vPager = new VerticalVPager(context);
-        //vPager.setOnPageChangeListener(listener);
-        vPager.addOnPageChangeListener(listener);
-        pagerAdapter = new CustomPagerAdapter(vPager);
-        vPager.setAdapter(pagerAdapter);
+    }
+    @SimpleFunction(description = "Returns number of views added to the view pager")
+    public int GetViewsCount(String id){
+        if (!pagerMap.containsKey(id)){
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
+        }else {
+            return pagerMap.get(id).pagerAdapter.viewList.size();
+        }
     }
     @SimpleFunction(description = "Returns current view index")
-    public int GetCurrentViewIndex(){
-        return vPager.getCurrentItem();
+    public int GetCurrentViewIndex(String id){
+        if (!pagerMap.containsKey(id)){
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
+        }else {
+            return pagerMap.get(id).getCurrentItem();
+        }
     }
-	@SimpleFunction(description = "Scroll to the given index view and sets as current item")
-	public void ScrollTo(int index,boolean smoothScroll){
-		vPager.setCurrentItem(index,smoothScroll);
-	}
-    @SimpleFunction(description = "Inintializes VerticalViewPager in given container")
-    public void Initialize(HVArrangement container){
-        viewGroup = (ViewGroup)container.getView();
-        viewGroup.addView(vPager);
+    @SimpleFunction(description = "Scroll to the given index view and sets as current item")
+    public void ScrollTo(String id,int index,boolean smoothScroll){
+        if (!pagerMap.containsKey(id)){
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
+        }else {
+            pagerMap.get(id).setCurrentItem(index, smoothScroll);
+        }
+    }
+    @SimpleFunction(description = "Initializes VerticalViewPager in given container")
+    public void Initialize(final String id,HVArrangement container){
+        if (pagerMap.containsKey(id)){
+            throw new YailRuntimeError("Id already exists", "VerticalViewPager");
+        }else {
+            VerticalVPager vPager = new VerticalVPager(context);
+            //vPager.setOnPageChangeListener(listener);
+            vPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
+                @Override
+                public void onPageSelected(int position) {
+                    PageChanged(id,position);
+                }
+            });
+            viewGroup = (ViewGroup) container.getView();
+            viewGroup.addView(vPager);
+            pagerMap.put(id, vPager);
+        }
     }
     @SimpleFunction(description = "Adds given component to the view pager")
-    public void AddComponent(AndroidViewComponent component){
-        View view = component.getView();
-        if (view.getParent() != null) {
-            ((ViewGroup) view.getParent()).removeView(view);
-        }
-        pagerAdapter.addView(view);
-        if(pagerAdapter.getCount() == 1){
-            vPager.setCurrentItem(0,true);
+    public void AddComponent(String id,Object component){
+        if (pagerMap.containsKey(id)) {
+            View view = ((AndroidViewComponent) component).getView();
+            if (view.getParent() != null) {
+                ((ViewGroup) view.getParent()).removeView(view);
+            }
+            VerticalVPager vPager = pagerMap.get(id);
+            vPager.pagerAdapter.addView(view);
+            if (vPager.pagerAdapter.getCount() == 1) {
+                vPager.setCurrentItem(0, true);
+            }
+        }else {
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
         }
     }
     @SimpleFunction(description = "Removes given component from view pager")
-    public void RemoveComponentByView(AndroidViewComponent component){
-        View view = component.getView();
-        pagerAdapter.removeView(view);
+    public void RemoveComponentByView(String id,Object component){
+        if (pagerMap.containsKey(id)) {
+            View view = ((AndroidViewComponent) component).getView();
+            pagerMap.get(id).pagerAdapter.removeView(view);
+        }else {
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
+        }
     }
     @SimpleFunction(description = "Removes the view from view pager present at given index")
-    public void RemoveComponentByIndex(int index){
-        pagerAdapter.removeItem(index);
+    public void RemoveComponentByIndex(String id,int index){
+        if (pagerMap.containsKey(id)) {
+            pagerMap.get(id).pagerAdapter.removeItem(index);
+        }else {
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
+        }
+    }
+    @SimpleFunction()
+    public void RemoveViewPager(String id){
+        if (pagerMap.containsKey(id)) {
+            VerticalVPager vPager = pagerMap.get(id);
+            ViewParent viewParent = vPager.getParent();
+            if (viewParent != null) { //not needed though
+                ((ViewGroup) viewParent).removeView(vPager);
+            }
+            pagerMap.remove(id);
+        }else {
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
+        }
     }
     @SimpleEvent(description = "Event invoked when current page is changed")
-    public void PageChanged(int index){
-        EventDispatcher.dispatchEvent(this,"PageChanged",index);
+    public void PageChanged(String id,int index){
+        EventDispatcher.dispatchEvent(this,"PageChanged",id,index);
     }
-    public ViewPager.OnPageChangeListener listener = new ViewPager.SimpleOnPageChangeListener(){
-        @Override
-        public void onPageSelected(int position) {
-            PageChanged(position);
-        }
-    };
     public static class VerticalVPager extends ViewPager {
 
         float x = 0;
         float mStartDragX = 0;
         private static final float SWIPE_X_MIN_THRESHOLD = 20; // Decide this magical nuber as per your requirement
+        public CustomPagerAdapter pagerAdapter;
 
         public VerticalVPager(Context context) {
             super(context);
-            init();
-        }
-
-        private void init() {
             setPageTransformer(true, new VerticalPageTransformer());
             setOverScrollMode(OVER_SCROLL_NEVER);
+            pagerAdapter = new CustomPagerAdapter(this);
+            setAdapter(pagerAdapter);
+        }
+
+        @Nullable
+        @Override
+        public PagerAdapter getAdapter() {
+            return pagerAdapter;
         }
 
         @Override
@@ -209,10 +263,10 @@ public class VerticalViewPager extends AndroidNonvisibleComponent{
                 if (currentItem != 0) {
                     vPager.setCurrentItem(currentItem - 1, true);
                 }else {
-                    vPager.setCurrentItem(currentItem + 1,true);
+                    vPager.setCurrentItem(0,true);
                 }
             }else{
-                vPager.setCurrentItem(currentItem);
+                vPager.setCurrentItem(currentItem,true);
             }
         }
         public void addView(View view){
