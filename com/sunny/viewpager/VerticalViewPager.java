@@ -93,6 +93,23 @@ public class VerticalViewPager extends AndroidNonvisibleComponent{
             throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
         }
     }
+
+    @SimpleFunction(description = "Adds component to the view pager at given index")
+    public void AddComponentToIndex(String id,int index,Object component){
+        if (pagerMap.containsKey(id)) {
+            View view = ((AndroidViewComponent) component).getView();
+            if (view.getParent() != null) {
+                ((ViewGroup) view.getParent()).removeView(view);
+            }
+            VerticalVPager vPager = pagerMap.get(id);
+            vPager.pagerAdapter.addView(index,view);
+            if (vPager.pagerAdapter.getCount() == 1) {
+                vPager.setCurrentItem(0, true);
+            }
+        }else {
+            throw new YailRuntimeError("Id does not exist", "VerticalViewPager");
+        }
+    }
     @SimpleFunction(description = "Removes given component from view pager")
     public void RemoveComponentByView(String id,Object component){
         if (pagerMap.containsKey(id)) {
@@ -131,7 +148,7 @@ public class VerticalViewPager extends AndroidNonvisibleComponent{
 
         float x = 0;
         float mStartDragX = 0;
-        private static final float SWIPE_X_MIN_THRESHOLD = 20; // Decide this magical nuber as per your requirement
+        private static final float SWIPE_X_MIN_THRESHOLD = 40; // Decide this magical nuber as per your requirement
         public CustomPagerAdapter pagerAdapter;
 
         public VerticalVPager(Context context) {
@@ -221,7 +238,7 @@ public class VerticalViewPager extends AndroidNonvisibleComponent{
             }
         }
         private class DepthPageTransformer implements PageTransformer {
-            private static final float MIN_SCALE = 0.75f;
+            private static final float MIN_SCALE = 0.95f;
             public void transformPage(View view, float position) {
                 int pageWidth = view.getWidth();
                 if (position < -1) {
@@ -285,7 +302,7 @@ public class VerticalViewPager extends AndroidNonvisibleComponent{
         public void destroyItem(ViewGroup container, int position, @NonNull Object object) {
             container.removeView((View)object);
         }
-        public void removeItem(int position){
+        private void removeItem(int position){
             int currentItem = vPager.getCurrentItem();
             vPager.setAdapter(null);
             viewList.remove(position);
@@ -301,11 +318,15 @@ public class VerticalViewPager extends AndroidNonvisibleComponent{
                 vPager.setCurrentItem(currentItem,true);
             }
         }
-        public void addView(View view){
+        private void addView(View view){
             viewList.add(view);
             notifyDataSetChanged();
         }
-        public void removeView(View view){
+        private void addView(int index,View view){
+            viewList.add(index,view);
+            notifyDataSetChanged();
+        }
+        private void removeView(View view){
             removeItem(viewList.indexOf(view));
         }
 
