@@ -2,13 +2,13 @@
 Extension to create Vertical View Pager (For MIT AI2 and its distros)
 ### 1.Introduction 
 **Description:** Using this extension you can create a vertical version of View Pager <br>
-**Latest Version:** 1 <br>
-**Last Updated:** 10-06-2021<br>
+**Latest Version:** 1.2 <br>
+**Last Updated:** 02-10-2021<br>
 **Released:** 10-06-2021<br>
 
 ### 2.Blocks
-<img src="https://community.appinventor.mit.edu/uploads/default/original/3X/8/9/898c96936aef940be225a32e6b6b633322383601.png"><br>
-<img src="https://community.appinventor.mit.edu/uploads/default/original/3X/6/1/61ec86d9960d33416e0cc09b49e3fd455d5a142f.png">
+<img src="https://community.appinventor.mit.edu/uploads/default/original/3X/d/e/deb58f1deb53776c70c885e10d68010932f4468d.png"><br>
+<img src="https://community.appinventor.mit.edu/uploads/default/original/3X/d/3/d349f1565ec6ff647e0b6e971b035df11f24361f.png">
 
 
 ### 3.Usages
